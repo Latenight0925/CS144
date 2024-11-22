@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <deque>
 #include <string>
 #include <string_view>
 
@@ -25,13 +26,19 @@ protected:
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
   uint64_t capacity_;
   bool error_ {};
+
+  std::deque<char> buf_;
+  bool closed_ {};
+  uint64_t bytes_pushed_ = 0;
+  uint64_t bytes_popped_ = 0;
 };
 
 class Writer : public ByteStream
 {
 public:
   void push( std::string data ); // Push data to stream, but only as much as available capacity allows.
-  void close();                  // Signal that the stream has reached its ending. Nothing more will be written.
+  void push( char ch );
+  void close(); // Signal that the stream has reached its ending. Nothing more will be written.
 
   bool is_closed() const;              // Has the stream been closed?
   uint64_t available_capacity() const; // How many bytes can be pushed to the stream right now?
