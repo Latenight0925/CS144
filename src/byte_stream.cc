@@ -1,75 +1,74 @@
 #include "byte_stream.hh"
-#include <stdexcept>
 
 using namespace std;
 
-ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ), error_( false ), buf_() {}
+ByteStream::ByteStream( uint64_t capacity )
+  : finish_write_( false ), tot_write_( 0 ), stream_( std::queue<char> {} ), capacity_( capacity )
+{}
 
 bool Writer::is_closed() const
 {
-  return closed_;
+  return finish_write_;
 }
 
 void Writer::push( string data )
 {
-  if ( closed_ || error_ )
-    return;
-
-  uint64_t writable = min( available_capacity(), static_cast<uint64_t>( data.size() ) );
-  for ( uint64_t i = 0; i < writable; i++ ) {
-    buf_.push_back( data[i] );
+  for ( char x : data ) {
+    if ( stream_.size() == capacity_ ) {
+      break;
+    }
+    stream_.push( x );
+    tot_write_++;
   }
-  bytes_pushed_ += writable;
-}
-
-void Writer::push( char ch )
-{
-  std::string str( 1, ch );
-  push( str );
+  return;
 }
 
 void Writer::close()
 {
-  closed_ = true;
+  finish_write_ = true;
 }
 
 uint64_t Writer::available_capacity() const
 {
-  return capacity_ - buf_.size();
+  return capacity_ - stream_.size();
 }
 
 uint64_t Writer::bytes_pushed() const
 {
-  return bytes_pushed_;
+  return tot_write_;
 }
 
 bool Reader::is_finished() const
 {
-  return closed_ && buf_.empty();
+  return finish_write_ && stream_.size() == 0;
 }
 
 uint64_t Reader::bytes_popped() const
 {
-  return bytes_popped_;
+  return tot_write_ - stream_.size();
 }
 
 string_view Reader::peek() const
 {
-  return { std::string_view( &buf_.front(), 1 ) };
+  if ( is_finished() ) {
+    return string_view( "" );
+  }
+  while ( stream_.size() == 0 ) {}
+  string_view result( &stream_.front(), 1 );
+  return result;
 }
 
 void Reader::pop( uint64_t len )
 {
-  if ( len > bytes_buffered() ) {
-    throw std::runtime_error( "pop len larger than buffer contain" );
+  while ( len-- ) {
+    if ( stream_.empty() ) {
+      break;
+    }
+    stream_.pop();
   }
-  for ( uint64_t i = 0; i < len; i++ ) {
-    buf_.pop_front();
-  }
-  bytes_popped_ += len;
 }
 
 uint64_t Reader::bytes_buffered() const
 {
-  return buf_.size();
+  return stream_.size();
 }
