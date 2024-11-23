@@ -23,14 +23,11 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
   uint64_t start_index, max_index;
   if ( expect_next_index_ < first_index ) {
 
-    max_index = max(
-      output_.writer().available_capacity() + expect_next_index_,
-      data.size() + first_index ); 
+    max_index = max( output_.writer().available_capacity() + expect_next_index_, data.size() + first_index );
     start_index = first_index;
 
   } else {
-    max_index = max( output_.writer().available_capacity() + expect_next_index_,
-                     data.size() + first_index ); 
+    max_index = max( output_.writer().available_capacity() + expect_next_index_, data.size() + first_index );
     start_index = expect_next_index_;
   }
 
