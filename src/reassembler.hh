@@ -1,18 +1,16 @@
 #pragma once
 
 #include "byte_stream.hh"
-#include <map>
+
+#include <climits>
+#include <unordered_map>
+#include <unordered_set>
 
 class Reassembler
 {
 public:
   // Construct Reassembler to write into given ByteStream.
-  explicit Reassembler( ByteStream&& output )
-    : output_( std::move( output ) )
-    , next_index_( 0 )
-    , last_index_( -1 )
-    , internal_bytes( std::map<uint64_t, char> {} )
-  {}
+  explicit Reassembler( ByteStream&& output ) : output_( std::move( output ) ) {}
 
   /*
    * Insert a new substring to be reassembled into a ByteStream.
@@ -48,9 +46,11 @@ public:
 
 private:
   ByteStream output_; // the Reassembler writes to this ByteStream
-  uint64_t next_index_;
-  uint64_t last_index_;
-  std::map<uint64_t, char> internal_bytes;
+  uint64_t expect_next_index_ { 0 };
+  uint64_t last_byte_next_index_ { LONG_LONG_MAX };
+  uint64_t bytes_pending_ { 0 };
+  std::unordered_set<uint64_t> flag_ {};
+  std::unordered_map<uint64_t, std::string> data_ {};
 
-  Writer& writer() { return output_.writer(); }
+  void try_close( uint64_t first_index, const std::string data, bool is_last_substring );
 };
