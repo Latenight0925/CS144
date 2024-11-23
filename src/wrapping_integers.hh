@@ -1,5 +1,6 @@
 #pragma once
 
+#include <climits>
 #include <cstdint>
 
 /*
@@ -30,4 +31,5 @@ public:
 
 protected:
   uint32_t raw_value_ {};
+  static constexpr uint64_t mod = ( 1ULL << 32 );
 };

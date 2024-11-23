@@ -27,4 +27,8 @@ public:
 
 private:
   Reassembler reassembler_;
+  std::optional<Wrap32> zero_point_ {};
+  std::optional<Wrap32> ackno_ {};
+  bool RST_ { false };
+  bool SYN_ { false };
 };

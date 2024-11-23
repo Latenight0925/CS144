@@ -12,7 +12,6 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
       break;
     }
   }
-
   if ( k == data.size() ) {
     try_close( first_index, data, is_last_substring );
     return;
@@ -23,11 +22,14 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
   uint64_t start_index, max_index;
   if ( expect_next_index_ < first_index ) {
 
-    max_index = max( output_.writer().available_capacity() + expect_next_index_, data.size() + first_index );
+    max_index = max(
+      output_.writer().available_capacity() + expect_next_index_,
+      data.size() + first_index ); // 设置遍历的最大下标，注意不包括，请注意这里只是保守保证，其内部必须单独判断
     start_index = first_index;
 
   } else {
-    max_index = max( output_.writer().available_capacity() + expect_next_index_, data.size() + first_index );
+    max_index = max( output_.writer().available_capacity() + expect_next_index_,
+                     data.size() + first_index ); // 设置遍历的最大下标，注意不包括
     start_index = expect_next_index_;
   }
 
@@ -72,8 +74,11 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
     } else {
 
       output_.writer().push( buffer );
+
       expect_next_index_ = i;
+
       bytes_pending_ -= i - start_index;
+
       for ( uint64_t j = start_index; j < i; j++ ) {
         flag_.erase( j );
       }

@@ -1,74 +1,65 @@
 #include "byte_stream.hh"
+#include <iostream>
 
 using namespace std;
 
-ByteStream::ByteStream( uint64_t capacity )
-  : finish_write_( false ), tot_write_( 0 ), stream_( std::queue<char> {} ), capacity_( capacity )
-{}
+ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ) {}
 
 bool Writer::is_closed() const
 {
-  return finish_write_;
+  return closed_;
 }
 
 void Writer::push( string data )
 {
-  for ( char x : data ) {
-    if ( stream_.size() == capacity_ ) {
-      break;
-    }
-    stream_.push( x );
-    tot_write_++;
+  if ( available_capacity() > 0 ) {
+    const uint64_t len = min( data.size(), available_capacity() );
+    buffer_.insert( buffer_.end(), data.begin(), data.begin() + len );
+    count_pushed += len;
   }
-  return;
 }
 
 void Writer::close()
 {
-  finish_write_ = true;
+  closed_ = true;
 }
 
 uint64_t Writer::available_capacity() const
 {
-  return capacity_ - stream_.size();
+  return capacity_ - buffer_.size();
 }
 
 uint64_t Writer::bytes_pushed() const
 {
-  return tot_write_;
+  return count_pushed;
 }
 
 bool Reader::is_finished() const
 {
-  return finish_write_ && stream_.size() == 0;
+  return closed_ && buffer_.empty();
 }
 
 uint64_t Reader::bytes_popped() const
 {
-  return tot_write_ - stream_.size();
+  return count_popped;
 }
 
 string_view Reader::peek() const
 {
-  if ( is_finished() ) {
-    return string_view( "" );
-  }
-  while ( stream_.size() == 0 ) {}
-  string_view result( &stream_.front(), 1 );
-  return result;
+  return string_view( buffer_ );
 }
 
 void Reader::pop( uint64_t len )
 {
-  while ( len-- ) {
-    if ( stream_.empty() ) {
-      break;
-    }
-    stream_.pop();
+  if ( bytes_buffered() < len ) {
+    set_error();
+    return;
   }
+  buffer_.erase( buffer_.begin(), buffer_.begin() + len );
+  count_popped += len;
 }
 
 uint64_t Reader::bytes_buffered() const
 {
-  return stream_.size();
+  return buffer_.size();
 }

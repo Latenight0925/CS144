@@ -30,7 +30,7 @@ public:
    * The Reassembler should discard any bytes that lie beyond the stream's available capacity
    * (i.e., bytes that couldn't be written even if earlier gaps get filled in).
    *
-   * The Reassembler should close the stream after writing the last byte.
+   * The Reassembler should the stream after writing the last byte.
    */
   void insert( uint64_t first_index, std::string data, bool is_last_substring );
 
@@ -45,12 +45,13 @@ public:
   const Writer& writer() const { return output_.writer(); }
 
 private:
+  void try_close( uint64_t first_index, const std::string data, bool is_last_substring );
+
   ByteStream output_; // the Reassembler writes to this ByteStream
   uint64_t expect_next_index_ { 0 };
   uint64_t last_byte_next_index_ { LONG_LONG_MAX };
+
   uint64_t bytes_pending_ { 0 };
   std::unordered_set<uint64_t> flag_ {};
   std::unordered_map<uint64_t, std::string> data_ {};
-
-  void try_close( uint64_t first_index, const std::string data, bool is_last_substring );
 };
